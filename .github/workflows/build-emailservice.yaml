@@ -1,0 +1,26 @@
+# Pipeline: build & push the "emailservice" image to the Indus Cloud registry.
+# Runs on push to main when src/emailservice changes, or manually from the Actions tab.
+name: build-emailservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/emailservice/**'
+      - '.github/workflows/build-emailservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-emailservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: emailservice
+      context: src/emailservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

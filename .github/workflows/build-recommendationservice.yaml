@@ -1,0 +1,26 @@
+# Pipeline: build & push the "recommendationservice" image to the Indus Cloud registry.
+# Runs on push to main when src/recommendationservice changes, or manually from the Actions tab.
+name: build-recommendationservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/recommendationservice/**'
+      - '.github/workflows/build-recommendationservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-recommendationservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: recommendationservice
+      context: src/recommendationservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

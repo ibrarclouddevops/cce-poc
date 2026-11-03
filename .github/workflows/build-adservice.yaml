@@ -1,0 +1,26 @@
+# Pipeline: build & push the "adservice" image to the Indus Cloud registry.
+# Runs on push to main when src/adservice changes, or manually from the Actions tab.
+name: build-adservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/adservice/**'
+      - '.github/workflows/build-adservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-adservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: adservice
+      context: src/adservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

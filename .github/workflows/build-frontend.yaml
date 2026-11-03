@@ -1,0 +1,26 @@
+# Pipeline: build & push the "frontend" image to the Indus Cloud registry.
+# Runs on push to main when src/frontend changes, or manually from the Actions tab.
+name: build-frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/frontend/**'
+      - '.github/workflows/build-frontend.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: frontend
+      context: src/frontend
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

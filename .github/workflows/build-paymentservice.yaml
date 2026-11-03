@@ -1,0 +1,26 @@
+# Pipeline: build & push the "paymentservice" image to the Indus Cloud registry.
+# Runs on push to main when src/paymentservice changes, or manually from the Actions tab.
+name: build-paymentservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/paymentservice/**'
+      - '.github/workflows/build-paymentservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-paymentservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: paymentservice
+      context: src/paymentservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

@@ -1,0 +1,26 @@
+# Pipeline: build & push the "checkoutservice" image to the Indus Cloud registry.
+# Runs on push to main when src/checkoutservice changes, or manually from the Actions tab.
+name: build-checkoutservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/checkoutservice/**'
+      - '.github/workflows/build-checkoutservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-checkoutservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: checkoutservice
+      context: src/checkoutservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

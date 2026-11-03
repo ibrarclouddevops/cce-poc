@@ -1,0 +1,26 @@
+# Pipeline: build & push the "productcatalogservice" image to the Indus Cloud registry.
+# Runs on push to main when src/productcatalogservice changes, or manually from the Actions tab.
+name: build-productcatalogservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/productcatalogservice/**'
+      - '.github/workflows/build-productcatalogservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-productcatalogservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: productcatalogservice
+      context: src/productcatalogservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

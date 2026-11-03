@@ -1,0 +1,26 @@
+# Pipeline: build & push the "shippingservice" image to the Indus Cloud registry.
+# Runs on push to main when src/shippingservice changes, or manually from the Actions tab.
+name: build-shippingservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/shippingservice/**'
+      - '.github/workflows/build-shippingservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-shippingservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: shippingservice
+      context: src/shippingservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

@@ -1,0 +1,26 @@
+# Pipeline: build & push the "cartservice" image to the Indus Cloud registry.
+# Runs on push to main when src/cartservice changes, or manually from the Actions tab.
+name: build-cartservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/cartservice/**'
+      - '.github/workflows/build-cartservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-cartservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: cartservice
+      context: src/cartservice/src
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

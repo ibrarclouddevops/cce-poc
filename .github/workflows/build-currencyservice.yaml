@@ -1,0 +1,26 @@
+# Pipeline: build & push the "currencyservice" image to the Indus Cloud registry.
+# Runs on push to main when src/currencyservice changes, or manually from the Actions tab.
+name: build-currencyservice
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/currencyservice/**'
+      - '.github/workflows/build-currencyservice.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-currencyservice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: currencyservice
+      context: src/currencyservice
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

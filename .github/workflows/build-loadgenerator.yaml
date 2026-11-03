@@ -1,0 +1,26 @@
+# Pipeline: build & push the "loadgenerator" image to the Indus Cloud registry.
+# Runs on push to main when src/loadgenerator changes, or manually from the Actions tab.
+name: build-loadgenerator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/loadgenerator/**'
+      - '.github/workflows/build-loadgenerator.yaml'
+      - '.github/workflows/_build-push.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: build-loadgenerator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-push.yaml
+    with:
+      service: loadgenerator
+      context: src/loadgenerator
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
