@@ -3,8 +3,10 @@
 #
 # ---- Configure these in GitHub: Settings > Secrets and variables > Actions ----
 # Variables (Variables tab):
-#   REGISTRY_URL        e.g. registry.induscloud.com          (registry host only)
-#   REGISTRY_NAMESPACE  e.g. myproject                        (org / project / namespace)
+#   REGISTRY_URL        e.g. swr.pk-icln-1.indus-cloud.com    (registry host only)
+#   REGISTRY_NAMESPACE  e.g. cce-poc                          (SWR organization)
+#   REGISTRY_INSECURE   optional: "true" if the registry TLS cert doesn't match its hostname
+#                       (Indus Cloud SWR currently serves a default Huawei cert with no SAN)
 # Secrets (Secrets tab):
 #   REGISTRY_USERNAME   registry login user
 #   REGISTRY_PASSWORD   registry password / access token
@@ -62,8 +64,17 @@ jobs:
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
+      - name: Trust registry with invalid TLS cert (REGISTRY_INSECURE=true)
+        if: vars.REGISTRY_INSECURE == 'true'
+        run: |
+          echo "{\"insecure-registries\": [\"${REGISTRY_URL}\"]}" | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+          printf '[registry."%s"]\n  insecure = true\n' "${REGISTRY_URL}" > "${RUNNER_TEMP}/buildkitd.toml"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config: ${{ vars.REGISTRY_INSECURE == 'true' && format('{0}/buildkitd.toml', runner.temp) || '' }}
 
       - name: Log in to Indus Cloud registry
         uses: docker/login-action@v3
