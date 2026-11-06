@@ -67,15 +67,20 @@ jobs:
       - name: Trust registry with invalid TLS cert (REGISTRY_INSECURE=true)
         if: vars.REGISTRY_INSECURE == 'true'
         run: |
-          echo "{\"insecure-registries\": [\"${REGISTRY_URL}\"]}" | sudo tee /etc/docker/daemon.json
+          echo "{\"insecure-registries\": [\"${REGISTRY_URL}\"], \"max-concurrent-uploads\": 2}" | sudo tee /etc/docker/daemon.json
           sudo systemctl restart docker
 
+      # The registry link from GitHub runners is slow/flaky (timeouts), so retry with backoff.
       - name: Log in to Indus Cloud registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ vars.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+        env:
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USERNAME" --password-stdin "$REGISTRY_URL" && exit 0
+            echo "Login attempt $i failed, retrying in $((i*15))s..."; sleep $((i*15))
+          done
+          exit 1
 
       # Plain docker build/push (not buildx): pushes go through the docker daemon,
       # which honors insecure-registries for the registry's token endpoint too.
@@ -92,7 +97,17 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          for t in ${TAGS//,/ }; do docker push "$t"; done
+          for t in ${TAGS//,/ }; do
+            for i in 1 2 3 4 5; do
+              docker push "$t" && break
+              [ "$i" = 5 ] && { echo "::error::Push of $t failed after 5 attempts"; exit 1; }
+              echo "Push attempt $i failed, retrying in $((i*20))s..."; sleep $((i*20))
+            done
+          done
+
+      - name: Log out of registry
+        if: always()
+        run: docker logout "$REGISTRY_URL" || true
 
       - name: Summary
         run: |
