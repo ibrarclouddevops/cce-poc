@@ -1,0 +1,48 @@
+# ----------------------------------------------------------------------
+# ClusterIssuers - Let's Encrypt via Cloudflare DNS
+#
+# How it works: cert-manager adds a temporary TXT record in Cloudflare,
+# Let's Encrypt checks it, and that proves we own antonx.com. No open port needed.
+#
+# letsencrypt-staging : for testing - unlimited, but browsers don't trust it
+# letsencrypt-prod    : real, trusted certificates - has rate limits
+# ----------------------------------------------------------------------
+# Test issuer - use first to check everything works without hitting rate limits
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key   # our Let's Encrypt account key (created automatically)
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+        selector:
+          dnsZones:
+            - antonx.com
+---
+# Production issuer - trusted by all browsers
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key   # our Let's Encrypt account key (created automatically)
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+        selector:
+          dnsZones:
+            - antonx.com

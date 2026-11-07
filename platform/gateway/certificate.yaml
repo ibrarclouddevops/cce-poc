@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------
+# Certificate for antonx.com and *.antonx.com
+#
+# cert-manager requests it from Let's Encrypt, stores it in the secret
+# 'antonx-com-tls', and renews it automatically ~30 days before expiry.
+# Start with letsencrypt-staging; once it shows Ready, switch to letsencrypt-prod.
+# ----------------------------------------------------------------------
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: antonx-com
+  namespace: nginx-gateway
+spec:
+  secretName: antonx-com-tls
+  dnsNames:
+    - antonx.com
+    - "*.antonx.com"
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod   # change to letsencrypt-staging for testing
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always

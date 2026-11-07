@@ -1,0 +1,41 @@
+# ----------------------------------------------------------------------
+# Argo CD app: gateway
+#
+# The public Gateway (ports 80/443), the *.antonx.com certificate, the
+# http->https redirect and the argocd.antonx.com route. The shop's own route lives
+# in services/frontend/httproute.yaml. Files: platform/gateway/
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gateway
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"   # platform starts before the shop (negative = earlier)
+  finalizers:
+    # Deleting this Application also deletes what it installed.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+    targetRevision: gitops
+    path: platform/gateway
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-gateway
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 10

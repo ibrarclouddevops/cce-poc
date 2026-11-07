@@ -1,0 +1,29 @@
+# ----------------------------------------------------------------------
+# NGINX Gateway Fabric 2.8.0 - Helm values (our settings)
+#
+# Only what we change from the chart defaults. Full list of options:
+# https://github.com/nginx/nginx-gateway-fabric/blob/v2.8.0/charts/nginx-gateway-fabric/values.yaml
+# ----------------------------------------------------------------------
+
+nginxGateway:
+  # Gateways use 'gatewayClassName: nginx' to be handled by this install.
+  gatewayClassName: nginx
+
+nginx:
+  # The NGINX pods that actually carry the traffic.
+  replicas: 2   # two copies, so the site stays up if one node goes down
+  service:
+    # One Huawei ELB with one public IP for all subdomains.
+    type: LoadBalancer
+    externalTrafficPolicy: Local   # keeps the real visitor IP in logs
+    # CCE needs ELB annotations on this Service. Fill in ONE option, then uncomment:
+    # patches:
+    #   - type: StrategicMerge
+    #     value:
+    #       metadata:
+    #         annotations:
+    #           kubernetes.io/elb.class: union
+    #           # Option A - use an existing ELB (ID from the Indus Cloud console):
+    #           kubernetes.io/elb.id: "<ELB_ID>"
+    #           # Option B - let CCE create one instead of elb.id:
+    #           # kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-poc-gateway","bandwidth_chargemode":"traffic","bandwidth_size":5,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'

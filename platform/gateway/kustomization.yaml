@@ -1,0 +1,18 @@
+# ----------------------------------------------------------------------
+# Public entry point
+#
+# Gateway 'public' = the front door. One certificate covers antonx.com and *.antonx.com.
+#
+# After the first sync, point DNS at the Gateway's public IP:
+#   kubectl -n nginx-gateway get svc      (EXTERNAL-IP of the 'public-nginx' service)
+#   Cloudflare DNS: A  shop    -> <EXTERNAL-IP>   (DNS only / grey cloud)
+#                   A  argocd  -> <EXTERNAL-IP>   (DNS only / grey cloud)
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - certificate.yaml        # the TLS certificate (from Let's Encrypt)
+  - gateway.yaml            # listens on 80 and 443 for our subdomains
+  - http-redirect.yaml      # sends http:// visitors to https://
+  - argocd-httproute.yaml   # argocd.antonx.com -> Argo CD dashboard

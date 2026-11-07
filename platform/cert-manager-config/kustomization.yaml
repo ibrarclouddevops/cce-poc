@@ -1,0 +1,16 @@
+# ----------------------------------------------------------------------
+# cert-manager config
+#
+# BEFORE THE FIRST SYNC create the Cloudflare API token secret (NOT stored in git).
+# Cloudflare: My Profile -> API Tokens -> Create Token -> 'Edit zone DNS' template,
+# Zone Resources: Include -> Specific zone -> antonx.com. Then:
+#
+#   kubectl create namespace cert-manager
+#   kubectl -n cert-manager create secret generic cloudflare-api-token \
+#     --from-literal=api-token='<YOUR_CLOUDFLARE_TOKEN>'
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cluster-issuers.yaml  # who signs our certificates (Let's Encrypt) and how we prove ownership

@@ -16,16 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build every service folder
+      - name: Build every kustomize folder
         run: |
           set -e
-          for d in services/*/; do
+          for d in services/*/ platform/cert-manager-config/ platform/gateway/; do
             kubectl kustomize "$d" > /dev/null
             echo "ok $d"
           done
 
-      - name: Check Argo CD files are valid YAML
+      - name: Check Argo CD files and Helm values are valid YAML
         run: |
-          for f in root-app.yaml argocd/project.yaml argocd/apps/*.yaml; do
+          for f in root-app.yaml argocd/*.yaml argocd/*/*.yaml platform/*/values.yaml; do
             python3 -c "import sys,yaml; yaml.safe_load(open(sys.argv[1]))" "$f" && echo "ok $f"
           done

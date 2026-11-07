@@ -1,0 +1,23 @@
+# ----------------------------------------------------------------------
+# cert-manager v1.21.3 - Helm values (our settings)
+#
+# Only what we change from the chart defaults. Full list of options:
+# https://github.com/cert-manager/cert-manager/blob/v1.21.3/deploy/charts/cert-manager/values.yaml
+# ----------------------------------------------------------------------
+
+# Install cert-manager's own resource types (Certificate, ClusterIssuer...) with the chart,
+# and keep them if the chart is ever uninstalled (deleting them would delete all certificates).
+crds:
+  enabled: true
+  keep: true
+
+global:
+  # Keep everything inside the cert-manager namespace (default would use kube-system).
+  leaderElection:
+    namespace: cert-manager
+
+# Check DNS-01 records against public DNS (Cloudflare/Google) instead of the
+# cluster's internal DNS, which may not see the public antonx.com zone.
+extraArgs:
+  - --dns01-recursive-nameservers-only
+  - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53

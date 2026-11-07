@@ -1,0 +1,25 @@
+# ----------------------------------------------------------------------
+# https://argocd.antonx.com -> Argo CD dashboard
+#
+# Argo CD must serve plain http behind the Gateway (the Gateway does TLS). Run once:
+#   kubectl -n argocd patch configmap argocd-cmd-params-cm --type merge \
+#     -p '{"data":{"server.insecure":"true"}}'
+#   kubectl -n argocd rollout restart deployment argocd-server
+# CLI login through the Gateway: argocd login argocd.antonx.com --grpc-web
+# ----------------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: public
+      namespace: nginx-gateway
+      sectionName: https-argocd
+  hostnames:
+    - argocd.antonx.com
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 80

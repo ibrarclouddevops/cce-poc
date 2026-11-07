@@ -3,7 +3,8 @@
 #
 #     kubectl apply -n argocd -f root-app.yaml
 #
-# It reads the argocd/ folder and creates the project + one app per service.
+# It reads the argocd/ folder and creates the projects, the cluster tools
+# (cert-manager, NGINX Gateway Fabric) and one app per service.
 # After that, everything is driven by git.
 # ----------------------------------------------------------------------
 apiVersion: argoproj.io/v1alpha1

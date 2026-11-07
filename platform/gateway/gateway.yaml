@@ -1,0 +1,54 @@
+# ----------------------------------------------------------------------
+# Gateway 'public' - the front door
+#
+# NGINX Gateway Fabric creates NGINX pods + one LoadBalancer (ELB) for it.
+# Each HTTPS listener serves one subdomain and only accepts routes from the
+# namespace that owns it, so nothing else can take over the hostname.
+# ----------------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: public
+  namespace: nginx-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+    # Plain http - only used to redirect to https (see http-redirect.yaml)
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+    # https://shop.antonx.com  -> the shop (route in services/frontend/httproute.yaml)
+    - name: https-shop
+      protocol: HTTPS
+      port: 443
+      hostname: shop.antonx.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: antonx-com-tls
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: online-boutique
+
+    # https://argocd.antonx.com  -> Argo CD dashboard (route in argocd-httproute.yaml)
+    - name: https-argocd
+      protocol: HTTPS
+      port: 443
+      hostname: argocd.antonx.com
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: antonx-com-tls
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd

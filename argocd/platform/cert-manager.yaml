@@ -1,0 +1,50 @@
+# ----------------------------------------------------------------------
+# Argo CD app: cert-manager
+#
+# Installs cert-manager v1.21.3 with Helm. It gets free TLS certificates
+# from Let's Encrypt and renews them automatically before they expire.
+# Settings: platform/cert-manager/values.yaml
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"   # platform starts before the shop (negative = earlier)
+  finalizers:
+    # Deleting this Application also deletes what it installed.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  sources:
+    # 1) the Helm chart itself
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.21.3
+      helm:
+        valueFiles:
+          - $values/platform/cert-manager/values.yaml
+    # 2) our settings for it, from this git branch
+    - repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+      targetRevision: gitops
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 10

@@ -1,0 +1,41 @@
+# ----------------------------------------------------------------------
+# Argo CD app: cert-manager-config
+#
+# Our cert-manager settings: the Let's Encrypt issuers (staging + production)
+# that prove we own antonx.com through Cloudflare DNS.
+# Files: platform/cert-manager-config/
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-config
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"   # platform starts before the shop (negative = earlier)
+  finalizers:
+    # Deleting this Application also deletes what it installed.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+    targetRevision: gitops
+    path: platform/cert-manager-config
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 10
