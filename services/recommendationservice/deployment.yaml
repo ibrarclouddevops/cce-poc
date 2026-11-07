@@ -23,7 +23,8 @@ spec:
       # Login used to download our private images from SWR (CCE creates it).
       imagePullSecrets:
         - name: default-secret
-      serviceAccountName: recommendationservice
+      # This service never talks to the Kubernetes API, so don't give it an API token.
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 5
       securityContext:
         fsGroup: 1000

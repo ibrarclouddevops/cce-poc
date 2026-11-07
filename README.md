@@ -17,7 +17,6 @@ services/
     kustomization.yaml   ← list of files + the VERSION (image tag)
     deployment.yaml      ← how to run it (image, CPU/memory, health checks)
     service.yaml         ← its address inside the cluster
-    serviceaccount.yaml  ← its identity
 ```
 
 Every file starts with a short comment explaining what it does.

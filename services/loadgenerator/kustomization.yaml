@@ -15,7 +15,6 @@ namespace: online-boutique
 
 resources:
   - deployment.yaml      # how to run it: image, CPU/memory, health checks
-  - serviceaccount.yaml  # its identity in the cluster
 
 images:
   - name: loadgenerator

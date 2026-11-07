@@ -16,7 +16,6 @@ namespace: online-boutique
 resources:
   - deployment.yaml      # how to run it: image, CPU/memory, health checks
   - service.yaml         # its network address inside the cluster
-  - serviceaccount.yaml  # its identity in the cluster
 
 images:
   - name: adservice
