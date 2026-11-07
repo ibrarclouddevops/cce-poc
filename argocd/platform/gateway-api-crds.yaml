@@ -2,7 +2,7 @@
 # Argo CD app: gateway-api-crds
 #
 # Installs the Kubernetes Gateway API resource types (Gateway, HTTPRoute...),
-# version v1.6.3 - the one NGINX Gateway Fabric 2.8.0 is built for.
+# version v1.5.1 - the one NGINX Gateway Fabric 2.6.8 is built for.
 # Never pruned or deleted automatically: removing CRDs deletes every Gateway/route.
 # ----------------------------------------------------------------------
 apiVersion: argoproj.io/v1alpha1
@@ -18,7 +18,7 @@ spec:
   project: platform
   source:
     repoURL: https://github.com/kubernetes-sigs/gateway-api.git
-    targetRevision: v1.6.3
+    targetRevision: v1.5.1
     path: config/crd
   destination:
     server: https://kubernetes.default.svc

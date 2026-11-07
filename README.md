@@ -51,8 +51,8 @@ cert-manager → Let's Encrypt (proves ownership via a Cloudflare DNS record)
 The back-end services have **no** public address on purpose; only the website and Argo CD do.
 
 Installed with Helm through Argo CD (versions pinned in `argocd/platform/`):
-cert-manager v1.21.3, NGINX Gateway Fabric 2.8.0, Gateway API v1.6.3.
-NGINX Gateway Fabric needs **Kubernetes 1.32 or newer** on the cluster.
+cert-manager v1.21.3, NGINX Gateway Fabric 2.6.8, Gateway API v1.5.1.
+NGINX Gateway Fabric 2.6.x supports **Kubernetes 1.31+** (CCE offers v1.31). Version 2.7+ needs 1.32.
 
 ## Database
 

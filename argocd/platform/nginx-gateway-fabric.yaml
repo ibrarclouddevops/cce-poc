@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------
 # Argo CD app: nginx-gateway-fabric
 #
-# Installs NGINX Gateway Fabric 2.8.0 with Helm: the front door that
+# Installs NGINX Gateway Fabric 2.6.8 with Helm: the front door that
 # receives internet traffic (one Huawei ELB) and sends each subdomain to the
 # right service. Settings: platform/nginx-gateway-fabric/values.yaml
 # ----------------------------------------------------------------------
@@ -23,7 +23,7 @@ spec:
     # 1) the Helm chart itself
     - repoURL: ghcr.io/nginx/charts
       chart: nginx-gateway-fabric
-      targetRevision: 2.8.0
+      targetRevision: 2.6.8
       helm:
         valueFiles:
           - $values/platform/nginx-gateway-fabric/values.yaml

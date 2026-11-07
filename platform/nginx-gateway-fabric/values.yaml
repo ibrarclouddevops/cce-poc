@@ -1,8 +1,8 @@
 # ----------------------------------------------------------------------
-# NGINX Gateway Fabric 2.8.0 - Helm values (our settings)
+# NGINX Gateway Fabric 2.6.8 - Helm values (our settings)
 #
 # Only what we change from the chart defaults. Full list of options:
-# https://github.com/nginx/nginx-gateway-fabric/blob/v2.8.0/charts/nginx-gateway-fabric/values.yaml
+# https://github.com/nginx/nginx-gateway-fabric/blob/v2.6.8/charts/nginx-gateway-fabric/values.yaml
 # ----------------------------------------------------------------------
 
 nginxGateway:
