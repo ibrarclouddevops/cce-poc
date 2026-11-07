@@ -1,0 +1,49 @@
+# Guardrails for every Online Boutique application:
+# only this repo, only the online-boutique namespace, only the resource kinds listed.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: online-boutique
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Online Boutique microservices on Huawei CCE (cce-poc)
+  sourceRepos:
+    - https://github.com/ibrarclouddevops/cce-poc.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: online-boutique
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: networking.k8s.io
+      kind: Ingress
+  orphanedResources:
+    warn: true   # flag resources in the namespace that git doesn't know about
+  roles:
+    - name: read-only
+      description: View Online Boutique apps
+      policies:
+        - p, proj:online-boutique:read-only, applications, get, online-boutique/*, allow

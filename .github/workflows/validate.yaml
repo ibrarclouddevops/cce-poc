@@ -1,0 +1,33 @@
+# Fails fast if any overlay no longer renders, before Argo CD tries to sync it.
+name: validate-gitops
+
+on:
+  push:
+    branches: [gitops]
+  pull_request:
+    branches: [gitops]
+
+permissions:
+  contents: read
+
+jobs:
+  kustomize-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Render every overlay
+        run: |
+          set -e
+          for d in apps/*/overlays/*/; do
+            echo "::group::$d"
+            kubectl kustomize "$d" > /dev/null
+            echo "ok"
+            echo "::endgroup::"
+          done
+
+      - name: Check Argo CD manifests parse
+        run: |
+          for f in bootstrap/*.yaml argocd/**/*.yaml; do
+            python3 -c "import sys,yaml; yaml.safe_load(open(sys.argv[1]))" "$f" && echo "ok $f"
+          done

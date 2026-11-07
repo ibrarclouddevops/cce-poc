@@ -1,0 +1,29 @@
+# currencyservice - cce-poc environment (Huawei CCE on Indus Cloud)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: online-boutique
+
+resources:
+  - ../../base
+
+labels:
+  - pairs:
+      environment: cce-poc
+    includeSelectors: false
+
+# Image tag is bumped here to roll out a new version (git commit = deployment record).
+images:
+  - name: currencyservice
+    newName: swr.pk-icln-1.indus-cloud.com/cce-poc/currencyservice
+    newTag: "450269e"
+
+patches:
+  # Pull private images from SWR. CCE creates 'default-secret' in each namespace.
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/imagePullSecrets
+        value:
+          - name: default-secret

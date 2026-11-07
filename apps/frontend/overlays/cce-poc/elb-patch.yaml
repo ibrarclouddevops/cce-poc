@@ -1,0 +1,12 @@
+# CCE LoadBalancer settings for frontend-external.
+# Option A - use an existing ELB: set elb.id to the ELB's ID from the console.
+# Option B - let CCE create one: remove elb.id and use elb.autocreate instead, e.g.
+#   kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-poc-frontend","bandwidth_chargemode":"traffic","bandwidth_size":5,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'
+# Annotation names can vary by CCE / Huawei Cloud Stack version - confirm with Indus Cloud docs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-external
+  annotations:
+    kubernetes.io/elb.class: union
+    kubernetes.io/elb.id: "<ELB_ID>"
