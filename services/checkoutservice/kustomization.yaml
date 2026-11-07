@@ -21,4 +21,4 @@ resources:
 images:
   - name: checkoutservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/checkoutservice
-    newTag: "c402440"   # <-- VERSION
+    newTag: "f0bc46b"   # <-- VERSION
