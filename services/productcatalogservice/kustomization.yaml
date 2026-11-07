@@ -21,4 +21,4 @@ resources:
 images:
   - name: productcatalogservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/productcatalogservice
-    newTag: "c402440"   # <-- VERSION
+    newTag: "f0bc46b"   # <-- VERSION
