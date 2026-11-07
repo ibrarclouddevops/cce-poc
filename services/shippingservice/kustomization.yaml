@@ -21,4 +21,4 @@ resources:
 images:
   - name: shippingservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/shippingservice
-    newTag: "c402440"   # <-- VERSION
+    newTag: "f0bc46b"   # <-- VERSION
