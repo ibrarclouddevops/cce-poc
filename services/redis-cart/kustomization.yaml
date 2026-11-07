@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# redis-cart - Redis database that stores shopping carts
+#
+# Argo CD deploys the files listed under 'resources' into the
+# 'online-boutique' namespace.
+#
+# Uses a public image (no version tag managed here).
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: online-boutique
+
+resources:
+  - deployment.yaml  # how to run it: image, CPU/memory, health checks
+  - service.yaml     # its network address inside the cluster
+
+# NOTE: uses public Docker Hub images (redis / busybox). If the cluster has no
+# internet access, copy them into SWR and point to them here.

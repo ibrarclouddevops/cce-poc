@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# paymentservice - Service
+#
+# A fixed name and port so other services can reach this one.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentservice
+  labels:
+    app: paymentservice
+spec:
+  type: ClusterIP
+  selector:
+    app: paymentservice
+  ports:
+  - name: grpc
+    port: 50051
+    targetPort: 50051

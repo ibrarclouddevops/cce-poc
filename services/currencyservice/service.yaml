@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# currencyservice - Service
+#
+# A fixed name and port so other services can reach this one.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: currencyservice
+  labels:
+    app: currencyservice
+spec:
+  type: ClusterIP
+  selector:
+    app: currencyservice
+  ports:
+  - name: grpc
+    port: 7000
+    targetPort: 7000

@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# checkoutservice - Service
+#
+# A fixed name and port so other services can reach this one.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkoutservice
+  labels:
+    app: checkoutservice
+spec:
+  type: ClusterIP
+  selector:
+    app: checkoutservice
+  ports:
+  - name: grpc
+    port: 5050
+    targetPort: 5050

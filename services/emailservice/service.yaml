@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# emailservice - Service
+#
+# A fixed name and port so other services can reach this one.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: emailservice
+  labels:
+    app: emailservice
+spec:
+  type: ClusterIP
+  selector:
+    app: emailservice
+  ports:
+  - name: grpc
+    port: 5000
+    targetPort: 8080

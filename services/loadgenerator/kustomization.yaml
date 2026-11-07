@@ -1,0 +1,26 @@
+# ----------------------------------------------------------------------
+# loadgenerator - Fake shoppers that create test traffic - optional (Python)
+#
+# Argo CD deploys the files listed under 'resources' into the
+# 'online-boutique' namespace.
+#
+# VERSION: 'newTag' below is the image version that runs in the cluster.
+# The build pipeline changes it automatically after every build.
+# To roll back, put an older tag here (or git revert the deploy commit).
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: online-boutique
+
+resources:
+  - deployment.yaml      # how to run it: image, CPU/memory, health checks
+  - serviceaccount.yaml  # its identity in the cluster
+
+images:
+  - name: loadgenerator
+    newName: swr.pk-icln-1.indus-cloud.com/cce-poc/loadgenerator
+    newTag: "c402440"   # <-- VERSION
+
+# NOTE: uses public Docker Hub images (redis / busybox). If the cluster has no
+# internet access, copy them into SWR and point to them here.

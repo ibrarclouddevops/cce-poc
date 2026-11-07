@@ -1,0 +1,29 @@
+# ----------------------------------------------------------------------
+# frontend - The website customers open in their browser (Go)
+#
+# Argo CD deploys the files listed under 'resources' into the
+# 'online-boutique' namespace.
+#
+# VERSION: 'newTag' below is the image version that runs in the cluster.
+# The build pipeline changes it automatically after every build.
+# To roll back, put an older tag here (or git revert the deploy commit).
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: online-boutique
+
+resources:
+  - deployment.yaml      # how to run it: image, CPU/memory, health checks
+  - service.yaml         # its network address inside the cluster
+  - serviceaccount.yaml  # its identity in the cluster
+
+images:
+  - name: frontend
+    newName: swr.pk-icln-1.indus-cloud.com/cce-poc/frontend
+    newTag: "c402440"   # <-- VERSION
+
+# Public internet access through a Huawei ELB load balancer:
+# fill in elb-patch.yaml, then remove the '#' from the two lines below.
+# patches:
+#   - path: elb-patch.yaml

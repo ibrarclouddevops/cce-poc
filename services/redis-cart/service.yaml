@@ -1,0 +1,19 @@
+# ----------------------------------------------------------------------
+# redis-cart - Service
+#
+# A fixed name and port so other services can reach this one.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cart
+  labels:
+    app: redis-cart
+spec:
+  type: ClusterIP
+  selector:
+    app: redis-cart
+  ports:
+  - name: tcp-redis
+    port: 6379
+    targetPort: 6379

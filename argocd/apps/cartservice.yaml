@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------
+# Argo CD app: cartservice - Shopping cart - add/remove items (C#)
+#
+# Keeps the folder services/cartservice/ (gitops branch) running in the
+# 'online-boutique' namespace, and keeps it matching git:
+#   - new commit in git     -> applied automatically
+#   - manual change in k8s  -> changed back (selfHeal)
+#   - file removed from git -> removed from k8s (prune)
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cartservice
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: online-boutique
+    app.kubernetes.io/component: backend
+    environment: cce-poc
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"   # start order: 1 = after the database (backend services)
+  finalizers:
+    # Deleting this Application also deletes its Kubernetes resources.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: online-boutique
+  source:
+    repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+    targetRevision: gitops
+    path: services/cartservice
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: online-boutique
+  syncPolicy:
+    automated:
+      prune: true      # remove resources deleted from git
+      selfHeal: true   # revert manual kubectl changes
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10

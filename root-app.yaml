@@ -1,0 +1,34 @@
+# ----------------------------------------------------------------------
+# ROOT APP - the only file you apply by hand
+#
+#     kubectl apply -n argocd -f root-app.yaml
+#
+# It reads the argocd/ folder and creates the project + one app per service.
+# After that, everything is driven by git.
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: online-boutique-root
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: online-boutique
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Root lives in 'default' because it manages Argo CD objects in the argocd namespace,
+  # which the restricted 'online-boutique' project intentionally cannot touch.
+  project: default
+  source:
+    repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+    targetRevision: gitops
+    path: argocd
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
