@@ -16,7 +16,7 @@ labels:
 images:
   - name: cartservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/cartservice
-    newTag: "450269e"
+    newTag: "c402440"
 
 patches:
   # Pull private images from SWR. CCE creates 'default-secret' in each namespace.
