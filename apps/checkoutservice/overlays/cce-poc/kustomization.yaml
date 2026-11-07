@@ -16,7 +16,7 @@ labels:
 images:
   - name: checkoutservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/checkoutservice
-    newTag: "450269e"
+    newTag: "c402440"
 
 patches:
   # Pull private images from SWR. CCE creates 'default-secret' in each namespace.
