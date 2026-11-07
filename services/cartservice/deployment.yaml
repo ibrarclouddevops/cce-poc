@@ -44,8 +44,18 @@ spec:
         ports:
         - containerPort: 7070
         env:
-        - name: REDIS_ADDR
-          value: "redis-cart:6379"
+        # Database connection (see services/postgres)
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "boutique"
+        - name: POSTGRES_USER
+          value: "boutique"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
         resources:
           requests:
             cpu: 200m
@@ -53,6 +63,13 @@ spec:
           limits:
             cpu: 300m
             memory: 128Mi
+        # Gives the service up to 2.5 minutes to connect to the database before
+        # the normal health checks start (otherwise they would restart it too early).
+        startupProbe:
+          grpc:
+            port: 7070
+          periodSeconds: 5
+          failureThreshold: 30
         readinessProbe:
           initialDelaySeconds: 15
           grpc:

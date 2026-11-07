@@ -1,0 +1,25 @@
+# ----------------------------------------------------------------------
+# postgres - PostgreSQL database for the shop
+#
+# Stores shopping carts (table cart_items) and products (table products)
+# in the database 'boutique'. Data lives on a persistent disk, so it
+# survives pod restarts.
+#
+# The database is created automatically on first start. The tables are
+# created by cartservice and productcatalogservice when they start.
+#
+# BEFORE THE FIRST SYNC create the password secret (it is NOT stored in git):
+#   kubectl -n online-boutique create secret generic postgres-credentials \
+#     --from-literal=password="$(openssl rand -base64 24)"
+# ----------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: online-boutique
+
+resources:
+  - statefulset.yaml  # the database server + its disk
+  - service.yaml      # address other services use: postgres:5432
+
+# NOTE: uses the public Docker Hub image postgres:16-alpine. If the cluster has
+# no internet access, copy it into SWR and point to it here with 'images:'.

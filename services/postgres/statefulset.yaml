@@ -1,0 +1,99 @@
+# ----------------------------------------------------------------------
+# postgres - StatefulSet
+#
+# Runs one PostgreSQL server with its own persistent disk (10Gi EVS disk on CCE).
+# A StatefulSet (not a Deployment) keeps the same disk attached to the pod
+# across restarts.
+#
+# Safety: Argo CD will never delete this database (Prune=false, Delete=false),
+# and Kubernetes keeps the disk even if the StatefulSet is deleted.
+# ----------------------------------------------------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      # This service never talks to the Kubernetes API, so don't give it an API token.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70     # 'postgres' user in the alpine image
+        runAsGroup: 70
+        fsGroup: 70       # lets the postgres user write to the disk
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        # The database 'boutique' and user 'boutique' are created on first start.
+        - name: POSTGRES_DB
+          value: boutique
+        - name: POSTGRES_USER
+          value: boutique
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+        # Subfolder, because a fresh disk contains 'lost+found'.
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          readOnlyRootFilesystem: true
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-h", "127.0.0.1", "-U", "boutique", "-d", "boutique"]
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-h", "127.0.0.1", "-U", "boutique", "-d", "boutique"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        - name: run
+          mountPath: /var/run/postgresql
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: run
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+  # The persistent disk. CCE creates an EVS disk for it automatically.
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: csi-disk   # CCE EVS block storage; check `kubectl get storageclass`
+      resources:
+        requests:
+          storage: 10Gi

@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------
-# Argo CD app: redis-cart - Redis database that stores shopping carts
+# Argo CD app: postgres - PostgreSQL database (carts + products)
 #
-# Keeps the folder services/redis-cart/ (gitops branch) running in the
+# Keeps the folder services/postgres/ (gitops branch) running in the
 # 'online-boutique' namespace, and keeps it matching git:
 #   - new commit in git     -> applied automatically
 #   - manual change in k8s  -> changed back (selfHeal)
@@ -10,7 +10,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: redis-cart
+  name: postgres
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: online-boutique
@@ -26,7 +26,7 @@ spec:
   source:
     repoURL: https://github.com/ibrarclouddevops/cce-poc.git
     targetRevision: gitops
-    path: services/redis-cart
+    path: services/postgres
   destination:
     server: https://kubernetes.default.svc
     namespace: online-boutique

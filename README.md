@@ -21,6 +21,27 @@ services/
 
 Every file starts with a short comment explaining what it does.
 
+## Database
+
+`services/postgres/` runs **PostgreSQL** with a 10Gi persistent disk. Data survives restarts.
+
+| Table (database `boutique`) | Owner | Contents |
+|---|---|---|
+| `cart_items` | cartservice | every shopper's cart |
+| `products` | productcatalogservice | the products for sale (filled from `products.json` on first start) |
+
+The database is created by PostgreSQL on first start; the tables are created by the two
+services. Argo CD is set to never delete the database.
+
+Look inside:
+
+```bash
+kubectl -n online-boutique exec -it postgres-0 -- psql -U boutique -d boutique
+#   \dt                       list tables
+#   SELECT * FROM products;   see products
+#   SELECT * FROM cart_items; see carts
+```
+
 ## How a new version gets deployed (automatic)
 
 ```
@@ -51,14 +72,20 @@ Don't fix things with `kubectl edit` — Argo CD will change them back to match 
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# 2. Start everything
+# 2. Create the database password (kept out of git on purpose)
+kubectl create namespace online-boutique
+kubectl -n online-boutique create secret generic postgres-credentials \
+  --from-literal=password="$(openssl rand -base64 24)"
+
+# 3. Start everything
 kubectl apply -n argocd -f root-app.yaml
 ```
 
 Before going live:
 - **Public access:** fill in `services/frontend/elb-patch.yaml` and enable it in `services/frontend/kustomization.yaml`.
 - **Image login:** pods use the `default-secret` pull secret (CCE normally creates it).
-- **Docker Hub images:** `redis-cart` and `loadgenerator` use public images; mirror them to SWR if nodes have no internet.
+- **Docker Hub images:** `postgres` and `loadgenerator` use public images; mirror them to SWR if nodes have no internet.
+- **Disk:** the database disk uses storage class `csi-disk` (check with `kubectl get storageclass`).
 
 ## Check your changes locally
 

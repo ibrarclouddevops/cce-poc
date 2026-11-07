@@ -48,6 +48,25 @@ spec:
           value: "3550"
         - name: DISABLE_PROFILER
           value: "1"
+        # Database connection (see services/postgres)
+        - name: POSTGRES_HOST
+          value: "postgres"
+        - name: POSTGRES_DB
+          value: "boutique"
+        - name: POSTGRES_USER
+          value: "boutique"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+        # Gives the service up to 2.5 minutes to connect to the database before
+        # the normal health checks start (otherwise they would restart it too early).
+        startupProbe:
+          grpc:
+            port: 3550
+          periodSeconds: 5
+          failureThreshold: 30
         readinessProbe:
           grpc:
             port: 3550
