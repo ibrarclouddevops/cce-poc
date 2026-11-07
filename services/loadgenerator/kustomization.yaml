@@ -20,7 +20,7 @@ resources:
 images:
   - name: loadgenerator
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/loadgenerator
-    newTag: "c402440"   # <-- VERSION
+    newTag: "f0bc46b"   # <-- VERSION
 
 # NOTE: uses public Docker Hub images (redis / busybox). If the cluster has no
 # internet access, copy them into SWR and point to them here.
