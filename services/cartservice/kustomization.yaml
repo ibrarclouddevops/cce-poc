@@ -20,4 +20,4 @@ resources:
 images:
   - name: cartservice
     newName: swr.pk-icln-1.indus-cloud.com/cce-poc/cartservice
-    newTag: "f0bc46b"   # <-- VERSION
+    newTag: "c253b10"   # <-- VERSION
