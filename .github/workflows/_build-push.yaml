@@ -125,7 +125,7 @@ jobs:
       IMAGE: ${{ needs.build-push.outputs.image }}
       TAG: ${{ needs.build-push.outputs.tag }}
       GITOPS_BRANCH: gitops
-      OVERLAY: apps/${{ inputs.service }}/overlays/cce-poc/kustomization.yaml
+      OVERLAY: services/${{ inputs.service }}/kustomization.yaml
     steps:
       - name: Checkout gitops branch
         uses: actions/checkout@v4
@@ -140,7 +140,8 @@ jobs:
 
           bump() {
             [ -f "$OVERLAY" ] || { echo "::error::$OVERLAY not found on $GITOPS_BRANCH"; exit 1; }
-            sed -i -E "s|^(\s*newName:).*|\1 ${IMAGE}|; s|^(\s*newTag:).*|\1 \"${TAG}\"|" "$OVERLAY"
+            # change only the values, keep any trailing comments
+            sed -i -E "s|^(\s*newName:\s*)[^[:space:]#]+|\1${IMAGE}|; s|^(\s*newTag:\s*)\"?[^\"[:space:]#]*\"?|\1\"${TAG}\"|" "$OVERLAY"
           }
 
           bump
