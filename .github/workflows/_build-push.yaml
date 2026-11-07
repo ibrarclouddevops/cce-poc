@@ -38,6 +38,9 @@ permissions:
 jobs:
   build-push:
     runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
     env:
       REGISTRY_URL: ${{ vars.REGISTRY_URL }}
       REGISTRY_NAMESPACE: ${{ vars.REGISTRY_NAMESPACE }}
@@ -62,6 +65,7 @@ jobs:
             TAGS="${TAGS},${IMAGE}:latest"
           fi
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Trust registry with invalid TLS cert (REGISTRY_INSECURE=true)
@@ -108,6 +112,64 @@ jobs:
       - name: Log out of registry
         if: always()
         run: docker logout "$REGISTRY_URL" || true
+
+  # GitOps: record the new image tag on the gitops branch; Argo CD then deploys it.
+  update-gitops:
+    needs: build-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # push to the gitops branch
+    env:
+      SERVICE: ${{ inputs.service }}
+      IMAGE: ${{ needs.build-push.outputs.image }}
+      TAG: ${{ needs.build-push.outputs.tag }}
+      GITOPS_BRANCH: gitops
+      OVERLAY: apps/${{ inputs.service }}/overlays/cce-poc/kustomization.yaml
+    steps:
+      - name: Checkout gitops branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.GITOPS_BRANCH }}
+
+      - name: Bump image tag, commit and push
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898900+github-actions[bot]@users.noreply.github.com"
+
+          bump() {
+            [ -f "$OVERLAY" ] || { echo "::error::$OVERLAY not found on $GITOPS_BRANCH"; exit 1; }
+            sed -i -E "s|^(\s*newName:).*|\1 ${IMAGE}|; s|^(\s*newTag:).*|\1 \"${TAG}\"|" "$OVERLAY"
+          }
+
+          bump
+          if git diff --quiet; then
+            echo "$SERVICE already at $TAG on $GITOPS_BRANCH - nothing to do"; exit 0
+          fi
+          git diff
+          git commit -am "deploy($SERVICE): $TAG" \
+            -m "Image: ${IMAGE}:${TAG}" \
+            -m "Source: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}" \
+            -m "Pipeline: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          # Several service pipelines may push at once: rebase and retry on conflict.
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:${GITOPS_BRANCH}" && break
+            [ "$i" = 5 ] && { echo "::error::Could not push to $GITOPS_BRANCH"; exit 1; }
+            echo "Push rejected (attempt $i), rebasing..."; sleep $((RANDOM % 5 + i * 3))
+            git fetch origin "$GITOPS_BRANCH"
+            if ! git rebase "origin/${GITOPS_BRANCH}"; then
+              # Only this service's overlay is ours: take theirs, re-apply our bump.
+              git rebase --abort
+              git reset --hard "origin/${GITOPS_BRANCH}"
+              bump
+              git commit -am "deploy($SERVICE): $TAG"
+            fi
+          done
+
+          echo "### GitOps updated" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$OVERLAY\` → \`${IMAGE}:${TAG}\` on \`$GITOPS_BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Summary
         run: |

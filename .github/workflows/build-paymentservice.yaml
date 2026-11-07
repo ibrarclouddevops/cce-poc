@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   build:
+    permissions:
+      contents: write   # lets the gitops update job push the new image tag
     uses: ./.github/workflows/_build-push.yaml
     with:
       service: paymentservice
