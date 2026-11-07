@@ -131,8 +131,8 @@ kubectl -n nginx-gateway get certificate     # READY should become True
 ```
 
 Before going live:
-- **ELB settings:** uncomment and fill in the `patches:` block in `platform/nginx-gateway-fabric/values.yaml`
-  (existing ELB ID or auto-create), otherwise the gateway's public IP stays `<pending>`.
+- **ELB:** CCE creates one shared ELB + public IP automatically (`platform/nginx-gateway-fabric/values.yaml`).
+  If the IP stays `<pending>`, run `kubectl -n nginx-gateway describe svc` and check `eip_type` there.
 - **Image login:** pods use the `default-secret` pull secret (CCE normally creates it).
 - **Public images:** `postgres`, `loadgenerator`, cert-manager (quay.io) and NGINX Gateway Fabric (ghcr.io)
   are pulled from the internet; mirror them to SWR if nodes have no internet.

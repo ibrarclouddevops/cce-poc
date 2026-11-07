@@ -16,14 +16,17 @@ nginx:
     # One Huawei ELB with one public IP for all subdomains.
     type: LoadBalancer
     externalTrafficPolicy: Local   # keeps the real visitor IP in logs
-    # CCE needs ELB annotations on this Service. Fill in ONE option, then uncomment:
-    # patches:
-    #   - type: StrategicMerge
-    #     value:
-    #       metadata:
-    #         annotations:
-    #           kubernetes.io/elb.class: union
-    #           # Option A - use an existing ELB (ID from the Indus Cloud console):
-    #           kubernetes.io/elb.id: "<ELB_ID>"
-    #           # Option B - let CCE create one instead of elb.id:
-    #           # kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-poc-gateway","bandwidth_chargemode":"traffic","bandwidth_size":5,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'
+    # CCE creates the ELB for us from these annotations (no manual ELB needed).
+    # NOTE: deleting this Service (or the nginx-gateway-fabric Argo app) also deletes
+    # the ELB and its public IP; a new one gets a NEW IP, so update Cloudflare DNS then.
+    patches:
+      - type: StrategicMerge
+        value:
+          metadata:
+            annotations:
+              # Shared ELB = the cheaper type (fine for this POC).
+              kubernetes.io/elb.class: union
+              # Create a public ELB with a new EIP: 5 Mbit/s, billed by traffic used.
+              # eip_type is the EIP "line type" - if Indus Cloud names it differently,
+              # `kubectl -n nginx-gateway describe svc` shows an error; change it here.
+              kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-poc-gateway","bandwidth_chargemode":"traffic","bandwidth_size":5,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'
