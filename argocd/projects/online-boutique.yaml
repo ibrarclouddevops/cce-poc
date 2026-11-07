@@ -1,5 +1,5 @@
 # Guardrails for every Online Boutique application:
-# only this repo, only the online-boutique namespace, only the resource kinds listed.
+# only this repo, only the online-boutique namespace, any namespaced resource kind.
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -19,27 +19,10 @@ spec:
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
+  # Any namespaced resource kind is allowed (still limited to the destinations above).
   namespaceResourceWhitelist:
-    - group: ""
-      kind: Service
-    - group: ""
-      kind: ServiceAccount
-    - group: ""
-      kind: ConfigMap
-    - group: ""
-      kind: Secret
-    - group: apps
-      kind: Deployment
-    - group: apps
-      kind: StatefulSet
-    - group: autoscaling
-      kind: HorizontalPodAutoscaler
-    - group: policy
-      kind: PodDisruptionBudget
-    - group: networking.k8s.io
-      kind: NetworkPolicy
-    - group: networking.k8s.io
-      kind: Ingress
+    - group: "*"
+      kind: "*"
   orphanedResources:
     warn: true   # flag resources in the namespace that git doesn't know about
   roles:
