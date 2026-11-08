@@ -1,24 +1,23 @@
 # ----------------------------------------------------------------------
-# postgres - StatefulSet
+# postgres - Deployment (no disk)
 #
-# Runs one PostgreSQL server with its own persistent disk (10Gi EVS disk on CCE).
-# A StatefulSet (not a Deployment) keeps the same disk attached to the pod
-# across restarts.
+# Runs one PostgreSQL server. Data is kept in memory/node storage (emptyDir),
+# so it is LOST when the pod restarts or moves - fine for this POC.
 #
-# Safety: Argo CD will never delete this database (Prune=false, Delete=false),
-# and Kubernetes keeps the disk even if the StatefulSet is deleted.
+# After a postgres restart the tables are empty/missing. They are created
+# (and the product list re-seeded) when the services start, so restart them:
+#   kubectl -n online-boutique rollout restart deploy cartservice productcatalogservice
 # ----------------------------------------------------------------------
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: postgres
   labels:
     app: postgres
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
-  serviceName: postgres
   replicas: 1
+  strategy:
+    type: Recreate   # never run two database pods at the same time
   selector:
     matchLabels:
       app: postgres
@@ -33,14 +32,14 @@ spec:
         runAsNonRoot: true
         runAsUser: 70     # 'postgres' user in the alpine image
         runAsGroup: 70
-        fsGroup: 70       # lets the postgres user write to the disk
+        fsGroup: 70
       containers:
       - name: postgres
         image: postgres:16-alpine
         ports:
         - containerPort: 5432
         env:
-        # The database 'boutique' and user 'boutique' are created on first start.
+        # The database 'boutique' and user 'boutique' are created on start.
         - name: POSTGRES_DB
           value: boutique
         - name: POSTGRES_USER
@@ -50,7 +49,6 @@ spec:
             secretKeyRef:
               name: postgres-credentials
               key: password
-        # Subfolder, because a fresh disk contains 'lost+found'.
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         securityContext:
@@ -83,17 +81,9 @@ spec:
         - name: tmp
           mountPath: /tmp
       volumes:
+      - name: data
+        emptyDir: {}    # no persistent disk: data is gone when the pod is replaced
       - name: run
         emptyDir: {}
       - name: tmp
         emptyDir: {}
-  # The persistent disk. CCE creates an EVS disk for it automatically.
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: csi-disk   # CCE EVS block storage; check `kubectl get storageclass`
-      resources:
-        requests:
-          storage: 10Gi

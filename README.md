@@ -56,7 +56,7 @@ NGINX Gateway Fabric 2.6.x supports **Kubernetes 1.31+** (CCE offers v1.31). Ver
 
 ## Database
 
-`services/postgres/` runs **PostgreSQL** with a 10Gi persistent disk. Data survives restarts.
+`services/postgres/` runs **PostgreSQL** as a simple Deployment with no disk. Data is lost when the postgres pod restarts (then restart cartservice and productcatalogservice to recreate the tables).
 
 | Table (database `boutique`) | Owner | Contents |
 |---|---|---|
@@ -138,7 +138,6 @@ Before going live:
 - **Image login:** pods use the `default-secret` pull secret (CCE normally creates it).
 - **Public images:** `postgres`, `loadgenerator`, cert-manager (quay.io) and NGINX Gateway Fabric (ghcr.io)
   are pulled from the internet; mirror them to SWR if nodes have no internet.
-- **Disk:** the database disk uses storage class `csi-disk` (check with `kubectl get storageclass`).
 - **Testing certificates:** set `issuerRef.name: letsencrypt-staging` in `platform/gateway/certificate.yaml`
   first if you want to avoid Let's Encrypt rate limits while experimenting.
 

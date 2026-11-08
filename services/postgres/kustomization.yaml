@@ -2,8 +2,8 @@
 # postgres - PostgreSQL database for the shop
 #
 # Stores shopping carts (table cart_items) and products (table products)
-# in the database 'boutique'. Data lives on a persistent disk, so it
-# survives pod restarts.
+# in the database 'boutique'. No persistent disk: data is lost when the
+# postgres pod restarts (fine for this POC).
 #
 # The database is created automatically on first start. The tables are
 # created by cartservice and productcatalogservice when they start.
@@ -18,7 +18,7 @@ kind: Kustomization
 namespace: online-boutique
 
 resources:
-  - statefulset.yaml  # the database server + its disk
+  - deployment.yaml   # the database server (no disk)
   - service.yaml      # address other services use: postgres:5432
 
 # NOTE: uses the public Docker Hub image postgres:16-alpine. If the cluster has
