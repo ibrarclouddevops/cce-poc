@@ -17,6 +17,10 @@ nginxGateway:
 nginx:
   # The NGINX pods that actually carry the traffic.
   replicas: 2   # two copies, so the site stays up if one node goes down
+  config:
+    # IPv4 only. The default (dual-stack IPv4+IPv6) is rejected by CCE:
+    # "union elb not support ipv6 protocol".
+    ipFamily: ipv4
   service:
     # One Huawei ELB with one public IP for all subdomains.
     type: LoadBalancer
