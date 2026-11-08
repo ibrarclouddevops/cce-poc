@@ -8,6 +8,11 @@
 nginxGateway:
   # Gateways use 'gatewayClassName: nginx' to be handled by this install.
   gatewayClassName: nginx
+  # Argo CD: create the GatewayClass LAST (wave 1), after the controller and its
+  # config (NginxGateway) in wave 0. Otherwise Argo CD waits for the GatewayClass
+  # to become healthy before creating the config the controller needs -> stuck.
+  gatewayClassAnnotations:
+    argocd.argoproj.io/sync-wave: '"1"'
 
 nginx:
   # The NGINX pods that actually carry the traffic.
