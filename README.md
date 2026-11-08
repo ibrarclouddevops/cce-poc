@@ -41,7 +41,7 @@ Every file starts with a short comment explaining what it does.
 How it fits together:
 
 ```
-visitor → Cloudflare DNS → Huawei ELB (one public IP)
+visitor → Cloudflare DNS → NAT Gateway EIP 192.232.52.130 (DNAT 80/443) → private Huawei ELB
         → NGINX Gateway Fabric (Gateway "public", does HTTPS)
         → HTTPRoute → frontend / argocd-server
 cert-manager → Let's Encrypt (proves ownership via a Cloudflare DNS record)
@@ -123,18 +123,21 @@ kubectl -n cert-manager create secret generic cloudflare-api-token \
 # 4. Start everything
 kubectl apply -n argocd -f root-app.yaml
 
-# 5. When the Gateway has a public IP, add DNS records in Cloudflare
-kubectl -n nginx-gateway get svc     # EXTERNAL-IP of the gateway's LoadBalancer
-#    A  shop    -> <EXTERNAL-IP>   (DNS only / grey cloud)
-#    A  argocd  -> <EXTERNAL-IP>   (DNS only / grey cloud)
+# 5. Expose the private ELB through the NAT Gateway, then add DNS records in Cloudflare
+kubectl -n nginx-gateway get svc public-nginx   # EXTERNAL-IP = the ELB's PRIVATE IP (10.50.1.x)
+#    NAT Gateway cce-poc -> DNAT rules on EIP 192.232.52.130:
+#       TCP 80  -> <EXTERNAL-IP>:80      TCP 443 -> <EXTERNAL-IP>:443
+#    A  shop    -> 192.232.52.130   (DNS only / grey cloud)
+#    A  argocd  -> 192.232.52.130   (DNS only / grey cloud)
 
 # 6. Check the certificate
 kubectl -n nginx-gateway get certificate     # READY should become True
 ```
 
 Before going live:
-- **ELB:** CCE creates one shared ELB + public IP automatically (`platform/nginx-gateway-fabric/values.yaml`).
-  If the IP stays `<pending>`, run `kubectl -n nginx-gateway describe svc` and check `eip_type` there.
+- **ELB:** CCE creates one private shared ELB automatically (`platform/nginx-gateway-fabric/values.yaml`).
+  The public IP is the NAT Gateway EIP 192.232.52.130 with DNAT 80/443 -> the ELB's private IP
+  (no EIP quota left for a public ELB). If the IP stays `<pending>`, run `kubectl -n nginx-gateway describe svc`.
 - **Image login:** pods use the `default-secret` pull secret (CCE normally creates it).
 - **Public images:** `postgres`, `loadgenerator`, cert-manager (quay.io) and NGINX Gateway Fabric (ghcr.io)
   are pulled from the internet; mirror them to SWR if nodes have no internet.
