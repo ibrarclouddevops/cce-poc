@@ -41,7 +41,7 @@ Every file starts with a short comment explaining what it does.
 How it fits together:
 
 ```
-visitor → Cloudflare DNS → NAT Gateway EIP 192.232.52.130 (DNAT 80/443) → private Huawei ELB
+visitor → Cloudflare DNS → NAT Gateway EIP 192.232.52.130 (DNAT 80/443) → node NodePort 30080/30443
         → NGINX Gateway Fabric (Gateway "public", does HTTPS)
         → HTTPRoute → frontend / argocd-server
 cert-manager → Let's Encrypt (proves ownership via a Cloudflare DNS record)
@@ -123,10 +123,10 @@ kubectl -n cert-manager create secret generic cloudflare-api-token \
 # 4. Start everything
 kubectl apply -n argocd -f root-app.yaml
 
-# 5. Expose the private ELB through the NAT Gateway, then add DNS records in Cloudflare
-kubectl -n nginx-gateway get svc public-nginx   # EXTERNAL-IP = the ELB's PRIVATE IP (10.50.1.x)
-#    NAT Gateway cce-poc -> DNAT rules on EIP 192.232.52.130:
-#       TCP 80  -> <EXTERNAL-IP>:80      TCP 443 -> <EXTERNAL-IP>:443
+# 5. Publish the gateway through the NAT Gateway, then add DNS records in Cloudflare
+kubectl -n nginx-gateway get svc public-nginx   # NodePort 80:30080, 443:30443
+#    NAT Gateway cce-poc -> DNAT rules on EIP 192.232.52.130, instance type ECS, node 10.50.1.141:
+#       TCP 80  -> 10.50.1.141:30080     TCP 443 -> 10.50.1.141:30443
 #    A  shop    -> 192.232.52.130   (DNS only / grey cloud)
 #    A  argocd  -> 192.232.52.130   (DNS only / grey cloud)
 
@@ -135,9 +135,9 @@ kubectl -n nginx-gateway get certificate     # READY should become True
 ```
 
 Before going live:
-- **ELB:** CCE creates one private shared ELB automatically (`platform/nginx-gateway-fabric/values.yaml`).
-  The public IP is the NAT Gateway EIP 192.232.52.130 with DNAT 80/443 -> the ELB's private IP
-  (no EIP quota left for a public ELB). If the IP stays `<pending>`, run `kubectl -n nginx-gateway describe svc`.
+- **Public entry:** no ELB (no EIP quota left). The gateway Service is a NodePort (30080/30443,
+  `platform/nginx-gateway-fabric/values.yaml`); the NAT Gateway EIP 192.232.52.130 forwards 80/443 to
+  node 10.50.1.141 with DNAT rules. If that node is removed, point the DNAT rules at another node.
 - **Image login:** pods use the `default-secret` pull secret (CCE normally creates it).
 - **Public images:** `postgres`, `loadgenerator`, cert-manager (quay.io) and NGINX Gateway Fabric (ghcr.io)
   are pulled from the internet; mirror them to SWR if nodes have no internet.

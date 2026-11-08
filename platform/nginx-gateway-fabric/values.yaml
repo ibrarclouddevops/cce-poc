@@ -22,23 +22,26 @@ nginx:
     # "union elb not support ipv6 protocol".
     ipFamily: ipv4
   service:
-    # One PRIVATE Huawei ELB (no EIP) in front of the NGINX pods.
-    # The account has no EIP quota left, so the public IP is the NAT Gateway's EIP
-    # (192.232.52.130) with DNAT rules 80/443 -> this ELB's private IP.
-    #   internet -> 192.232.52.130 (NAT DNAT) -> private ELB 10.50.1.x -> NGINX pods
-    type: LoadBalancer
-    externalTrafficPolicy: Local   # keeps the real visitor IP in logs
-    # CCE creates the ELB for us from these annotations.
-    # NOTE: deleting this Service (or the nginx-gateway-fabric Argo app) also deletes the
-    # ELB; the new one gets a new private IP, so update the 2 DNAT rules then.
-    patches:
-      - type: StrategicMerge
-        value:
-          metadata:
-            annotations:
-              # Shared ELB = the cheaper type (fine for this POC).
-              kubernetes.io/elb.class: union
-              # Private ELB (type inner): no EIP needed.
-              # To use a public ELB later (needs EIP quota), replace with:
-              #   '{"type":"public","bandwidth_name":"cce-poc-gateway","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'
-              kubernetes.io/elb.autocreate: '{"type":"inner","name":"cce-poc-gateway"}'
+    # NodePort service, published through the NAT Gateway (no ELB, no extra EIP:
+    # the account has no EIP quota left).
+    #   internet -> 192.232.52.130:80/443 (NAT Gateway DNAT rules)
+    #            -> node 10.50.1.141:30080/30443 -> NGINX pods
+    type: NodePort
+    # Cluster = any node accepts the traffic and forwards it to an NGINX pod,
+    # so the DNAT rule works whichever node the NGINX pods run on.
+    externalTrafficPolicy: Cluster
+    # Fixed ports, so the DNAT rules never need to change.
+    nodePorts:
+      - port: 30080
+        listenerPort: 80
+      - port: 30443
+        listenerPort: 443
+    # To use a public ELB later (needs EIP quota): set type: LoadBalancer, remove
+    # nodePorts and add this patch:
+    #   patches:
+    #     - type: StrategicMerge
+    #       value:
+    #         metadata:
+    #           annotations:
+    #             kubernetes.io/elb.class: union
+    #             kubernetes.io/elb.autocreate: '{"type":"public","bandwidth_name":"cce-poc-gateway","bandwidth_chargemode":"traffic","bandwidth_size":10,"bandwidth_sharetype":"PER","eip_type":"5_bgp"}'
