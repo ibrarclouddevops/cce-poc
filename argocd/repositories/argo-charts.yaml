@@ -1,0 +1,18 @@
+# ----------------------------------------------------------------------
+# Helm chart repository: Argo (OCI)
+#
+# Tells Argo CD that ghcr.io/argoproj/argo-helm is an OCI Helm registry.
+# Public registry - no password, so this is safe to keep in git.
+# ----------------------------------------------------------------------
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-argo-charts
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  name: argo-charts
+  type: helm
+  url: ghcr.io/argoproj/argo-helm
+  enableOCI: "true"

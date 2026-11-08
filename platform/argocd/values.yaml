@@ -1,0 +1,29 @@
+# ----------------------------------------------------------------------
+# Argo CD (Helm chart argo-cd 10.15.0 = Argo CD v3.6.1) - our settings
+#
+# Only what we change from the chart defaults. Full list of options:
+# https://github.com/argoproj/argo-helm/blob/argo-cd-10.15.0/charts/argo-cd/values.yaml
+#
+# The SAME file is used twice:
+#   1. once by hand, to install Argo CD the first time (helm install, see README)
+#   2. then by the 'argocd' Argo CD app, which keeps Argo CD itself in sync with git
+# ----------------------------------------------------------------------
+
+global:
+  # Public address of the Argo CD web UI (served by the Gateway, see platform/gateway/).
+  domain: argocd.antonx.com
+
+crds:
+  install: true
+  keep: true            # keep Argo CD's CRDs (and so all Applications) if the chart is ever removed
+
+configs:
+  params:
+    # The Gateway does HTTPS in front of Argo CD, so argocd-server itself serves plain HTTP.
+    server.insecure: true
+
+# Not used here - turned off to save CPU/memory. Set to true to bring them back.
+dex:
+  enabled: false        # single sign-on (GitHub/Google login); we log in as 'admin'
+notifications:
+  enabled: false        # Slack/email alerts on sync

@@ -1,0 +1,51 @@
+# ----------------------------------------------------------------------
+# Argo CD app: argocd  (Argo CD manages itself)
+#
+# Installs Argo CD v3.6.1 with Helm (chart argo-cd 10.15.0).
+# Settings: platform/argocd/values.yaml
+#
+# The very first install is done by hand with the same chart + values
+# (see README "First-time setup"); after that this app takes over, so
+# upgrading Argo CD = change targetRevision below and push.
+# ----------------------------------------------------------------------
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "-6"   # first of the platform tools
+  # NO finalizer on purpose: deleting this Application must never delete Argo CD itself.
+spec:
+  project: platform
+  sources:
+    # 1) the Helm chart itself (OCI registry, see argocd/repositories/argo-charts.yaml)
+    - repoURL: ghcr.io/argoproj/argo-helm
+      chart: argo-cd
+      targetRevision: 10.15.0
+      helm:
+        releaseName: argocd     # must match the name used by the first 'helm install'
+        valueFiles:
+          - $values/platform/argocd/values.yaml
+    # 2) our settings for it, from this git branch
+    - repoURL: https://github.com/ibrarclouddevops/cce-poc.git
+      targetRevision: gitops
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true    # Argo CD's CRDs are too big for normal apply
+    retry:
+      limit: 10
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 10

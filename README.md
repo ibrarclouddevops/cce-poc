@@ -51,7 +51,7 @@ cert-manager → Let's Encrypt (proves ownership via a Cloudflare DNS record)
 The back-end services have **no** public address on purpose; only the website and Argo CD do.
 
 Installed with Helm through Argo CD (versions pinned in `argocd/platform/`):
-cert-manager v1.21.3, NGINX Gateway Fabric 2.6.8, Gateway API v1.5.1.
+Argo CD v3.6.1 (chart 10.15.0), cert-manager v1.21.3, NGINX Gateway Fabric 2.6.8, Gateway API v1.5.1.
 NGINX Gateway Fabric 2.6.x supports **Kubernetes 1.31+** (CCE offers v1.31). Version 2.7+ needs 1.32.
 
 ## Database
@@ -101,13 +101,15 @@ Don't fix things with `kubectl edit` — Argo CD will change them back to match 
 ## First-time setup
 
 ```bash
-# 1. Install Argo CD on the cluster
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# 1. Install Argo CD once with Helm (same chart + values the 'argocd' app uses afterwards,
+#    so Argo CD then takes itself over - no 'helm upgrade' needed later)
+git clone -b gitops https://github.com/ibrarclouddevops/cce-poc.git && cd cce-poc
+helm install argocd oci://ghcr.io/argoproj/argo-helm/argo-cd --version 10.15.0 \
+  -n argocd --create-namespace -f platform/argocd/values.yaml
+kubectl -n argocd rollout status deploy/argocd-server
 
-# 2. Let Argo CD run behind the Gateway (the Gateway does HTTPS)
-kubectl -n argocd patch configmap argocd-cmd-params-cm --type merge -p '{"data":{"server.insecure":"true"}}'
-kubectl -n argocd rollout restart deployment argocd-server
+# 2. Admin password for the first login (user: admin)
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
 
 # 3. Secrets that are kept out of git on purpose
 kubectl create namespace online-boutique

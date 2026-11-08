@@ -1,7 +1,7 @@
 # ----------------------------------------------------------------------
 # Argo CD project: platform - shared cluster tools
 #
-# cert-manager and NGINX Gateway Fabric install cluster-wide things (CRDs,
+# Argo CD, cert-manager and NGINX Gateway Fabric install cluster-wide things (CRDs,
 # ClusterRoles, webhooks), so they get their own project with wider rights
 # than the shop. Only the namespaces and chart sources listed here are allowed.
 # ----------------------------------------------------------------------
@@ -15,11 +15,12 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  description: Cluster tools - certificates (cert-manager) and traffic (NGINX Gateway Fabric)
+  description: Cluster tools - Argo CD itself, certificates (cert-manager) and traffic (NGINX Gateway Fabric)
   sourceRepos:
     - https://github.com/ibrarclouddevops/cce-poc.git
     - https://charts.jetstack.io                         # cert-manager Helm chart
     - ghcr.io/nginx/charts                               # NGINX Gateway Fabric Helm chart (OCI)
+    - ghcr.io/argoproj/argo-helm                         # Argo CD Helm chart (OCI)
     - https://github.com/kubernetes-sigs/gateway-api.git # Gateway API CRDs
   destinations:
     - server: https://kubernetes.default.svc
@@ -27,7 +28,7 @@ spec:
     - server: https://kubernetes.default.svc
       namespace: nginx-gateway
     - server: https://kubernetes.default.svc
-      namespace: argocd          # only for the argocd.antonx.com HTTPRoute
+      namespace: argocd          # Argo CD itself + the argocd.antonx.com HTTPRoute
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
