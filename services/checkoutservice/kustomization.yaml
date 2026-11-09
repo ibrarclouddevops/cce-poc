@@ -16,6 +16,7 @@ namespace: online-boutique
 resources:
   - deployment.yaml      # how to run it: image, CPU/memory, health checks
   - service.yaml         # its network address inside the cluster
+  - hpa.yaml             # autoscaling: 1 to 3 pods on CPU load
 
 images:
   - name: checkoutservice

@@ -1,0 +1,31 @@
+# ----------------------------------------------------------------------
+# productcatalogservice - HorizontalPodAutoscaler
+#
+# Adds pods when the average CPU use goes above 70% of the CPU request,
+# up to 4 pods. Removes them again after 5 minutes of low load (min 1).
+# Needs the CCE add-on "Kubernetes Metrics Server" (kubectl top pods).
+# Watch it:  kubectl -n online-boutique get hpa productcatalogservice -w
+# ----------------------------------------------------------------------
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: productcatalogservice
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: productcatalogservice
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0     # react to load immediately
+    scaleDown:
+      stabilizationWindowSeconds: 300   # wait 5 min of low load before removing pods
