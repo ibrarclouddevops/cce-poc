@@ -80,9 +80,9 @@ spec:
         - name: FRONTEND_ADDR
           value: "frontend:80"
         - name: USERS
-          value: "1000"
+          value: "100"
         - name: RATE
-          value: "10"
+          value: "1"
         resources:
           requests:
             cpu: 300m
